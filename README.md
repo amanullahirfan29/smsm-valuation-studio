@@ -1,154 +1,162 @@
+[README.md](https://github.com/user-attachments/files/33909798/README.md)
 # SMSM Valuation Studio — MM6026 Digital Business Valuation
 
-**PT Selamat Sempurna Tbk (IDX: SMSM)** · reference valuation date **23 October 2026**
+**Company:** PT Selamat Sempurna Tbk (IDX: SMSM)  
+**Valuation date:** 23 October 2026  
+**Academic project:** MM6026 Mid-Term Exam — AI-Assisted Business Valuation Model  
+**Implementation:** Python valuation engine + Streamlit web application
 
-A locally runnable six-page **Streamlit** application powered by a standalone, independently tested **Python valuation engine**. This is an application-based valuation platform, not a VBA workbook. It is the Stage 5 implementation for SBM ITB's MM6026 Mid-Term Examination.
+## 1. Live application and project repository
 
-> **Financial caution:** The valuation is **provisional**, not a fully certified investment recommendation. The default model deliberately withholds Buy/Hold/Sell because relative peers and some October-date economic claims are not yet fully documented. Blue-chip UI appearance does not establish investment accuracy.
+- **Public application:** https://smsm-valuation-studio-bcpsqf2emmgopwtmburdrr.streamlit.app
+- **GitHub source:** https://github.com/amanullahirfan29/smsm-valuation-studio
+- **Access:** The deployed application was successfully accessed in a Chrome Incognito session and on a real iPhone without a GitHub login during user acceptance testing on 24 October 2026. A standard web browser and internet access are needed to use the hosted version.
+- **Valuation status:** **PROVISIONAL; formal investment recommendation WITHHELD.** Application availability and tested mathematical reconciliations do not certify all inputs or amount to investment advice.
 
-## A. Quick start
+The platform has six sections: **Dashboard & Overview**, **Historical Financial Data**, **Forecast Assumptions**, **Valuation Results**, **Scenarios & Sensitivity**, and **Sources, Validation & Export**.
 
-Prerequisites: **Python 3.10+**, pip, a modern browser and internet access **at installation time** for Python packages (application operation needs no continuous internet connection).
+## 2. What the model does
 
-**Windows PowerShell**
+The financial workflow separates historical inputs, editable economic assumptions, Python valuation calculations, and scenario/report outputs:
+
+1. **Market value:** compares an observed share price and share-count proxy with the model's estimated parent equity value.
+2. **DCF:** forecasts nominal-IDR FCFF, discounts it at nominal-IDR WACC, includes the remaining FY2026 stub period and terminal value, and bridges operating enterprise value to parent common equity.
+3. **Relative valuation:** calculates indicative EV/EBITDA and EV/EBIT diagnostics when inputs exist. A source-review/peer-approval gate prevents uncertified peer figures from being treated as a final relative fair value or an unconditional investment recommendation.
+4. **User updateability:** allows controlled Excel imports, changes to forecast and capital-market assumptions, recalculated sensitivities, scenario switching, and report exports.
+5. **Validation:** blocks material invalid inputs including terminal growth at or above WACC or sustainable ROIC; checks calculated identities, capitalization weights, and enterprise/equity reconciliation.
+
+**Core formulas:** The model's capital structure convention includes a non-controlling-interest equity-weight proxy in `E`, and bank plus lease financing in `D`.
+
+
+```text
+Cost of equity = risk-free rate + beta × equity risk premium
+WACC = E/(D+E) × Ke + D/(D+E) × Kd × (1 − financing tax shield)
+FCFF = EBIT × (1 − operating tax rate) + D&A − CapEx − change in operating NWC
+Operating enterprise value = PV(explicit FCFF) + PV(terminal value)
+Parent equity value = operating EV + excess cash + nonoperating investments − financing claims − NCI and other economic claims
+```
+
+## 3. Default reference results (not independently certified market targets)
+
+All valuations are conditional outputs from the reference model as of **23 October 2026**.
+
+| Metric | Reference result |
+|---|---:|
+| Market close | Rp1,670/share |
+| Approximate market capitalization | Rp9,617.0 billion |
+| Cost of equity | 12.047% |
+| Nominal IDR WACC | 11.968188% |
+| Operating enterprise value | Rp11,977.489 billion |
+| Parent equity value | Rp12,148.441 billion |
+| Bear | Rp1,409.29/share |
+| Base | Rp2,109.59/share |
+| Bull | Rp2,988.01/share |
+| Base modeled upside vs market | +26.3% |
+| Formal investment recommendation | **WITHHELD** |
+
+The model's Base DCF suggests possible undervaluation relative to the observed market price, but the Bear outcome and unresolved share-count/economic-claims/peer checks prevent an unconditional Buy/Hold/Sell call.
+
+## 4. Run the application locally
+
+**Prerequisites:** Python 3.10+, `pip`, and a modern web browser. Internet access is needed to install the listed dependencies if they are not cached locally.
+
+**Windows PowerShell** (run from the cloned repository root):
 
 ```powershell
-cd SMSM_Valuation_Platform
+git clone https://github.com/amanullahirfan29/smsm-valuation-studio.git
+cd smsm-valuation-studio
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-**macOS or Linux**
+**macOS/Linux**:
 
 ```bash
-cd SMSM_Valuation_Platform
+git clone https://github.com/amanullahirfan29/smsm-valuation-studio.git
+cd smsm-valuation-studio
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m streamlit run app.py
 ```
 
-After launch, Streamlit normally displays a localhost address such as `http://localhost:8501`. Open the address **displayed by your own terminal**. There is **no deployed public URL**.
+Open the localhost URL shown by Streamlit, usually `http://localhost:8501`. Alternatively, Windows users can inspect `start_windows.bat` and macOS/Linux users can inspect `start_mac_linux.sh` in the repository. Local execution is separate from the public hosted instance.
 
-If Python reports `streamlit` is unavailable, run `python -m pip install -r requirements.txt` inside the virtual environment. The current build environment lacks Streamlit and cannot download it, so a browser-server smoke test remains to be performed on a machine with dependencies installed.
-
-For a **no-Streamlit numerical execution**:
+**Run the independent valuation engine without Streamlit:**
 
 ```bash
 python run_cli.py
 ```
 
-This runs all three scenarios and writes `SMSM_cli_valuation_results.json` in the extracted project directory.
-
-## B. Navigation and operating instructions
-
-| Page | Core functions |
-|---|---|
-| Dashboard & Overview | Provisional Market/DCF metrics, scenario comparison, method confidence and economic-risk notices |
-| Historical Financial Data | Audited/restated historical data; TTM analysis; controlled `.xlsx` upload and audit of changed inputs |
-| Forecast Assumptions | Edit Bear/Base/Bull revenue, margin, taxes, D&A, capital investment, working capital, cash/NCI assumptions and WACC market inputs |
-| Valuation Results | Source-calculated FCFF/WACC/enterprise-to-equity reconciliation, peer inputs/multiples and controlled peer-approval checklist |
-| Scenarios & Sensitivity | Three independently recomputed scenarios and sensitivities for risk, growth, reinvestment and non-operating claims |
-| Sources, Validation & Export | Source URLs, status messages, input validation, JSON/CSV/printable-HTML report downloads |
-
-**How to demonstrate calculation updateability:** Open *Forecast Assumptions → Base* and increase `FY2026 EBIT margin` by 1 percentage point. The following values update from the actual engine: 2026 EBIT, taxes, NOPAT, FCFF, discounted cash flows, enterprise value, common equity, and fair value per share. Return to the default values or use **Reset to verified sample**.
-
-**How to import updated statements:** Open *Historical Financial Data*, upload either of the supplied exact-format workbooks, then click **Validate and apply workbook**. A file with mismatched/missing required worksheets or hardcoded inputs is rejected; valid input cells replace the original record and calculations are rerun in Python. Stage2B workbooks update reported historical inputs and NWC from underlying accounts. Stage4 workbooks update the **editable economic assumptions, WACC source inputs and bridge inputs**; Stage4 historical cached formulas are intentionally ignored because they contain a documented historical mapping defect.
-
-**How to review peers:** The `Valuation Results` page contains a collapsible peer input/approval section. Update full capitalization and financial data, provide market and financial statement dates, source URL and an adjustment memorandum; explicitly confirm the financial and economic comparability reviews and certify peer approval. The relative valuation confidence gate requires **at least two sufficiently documented peers**; it will not approve AUTO while material inputs remain missing. Even with peer certifications, material DCF/relative disagreement keeps the investment recommendation withheld.
-
-**Exports:** `Sources, Validation & Export` allows a snapshot JSON report, CSV of the three scenarios, and print-ready HTML. All three read from the same fresh model result displayed in the UI. They record the recommended status as **WITHHELD** when evidence is insufficient.
-
-## C. Folder layout
-
-```
-SMSM_Valuation_Platform/
-├── app.py                      # Streamlit interface / navigation
-├── run_cli.py                  # independent command-line execution
-├── requirements.txt
-├── pytest.ini
-├── README.md
-├── DATA_PROVENANCE.md
-├── TEST_REPORT.md
-├── data/
-│   ├── reference_inputs.json  # documented, edit-safe seed from Stage 2B + Stage 4
-│   ├── SMSM_Stage_2B_Reconciled_Financial_Data.xlsx
-│   └── ORIGINAL_Stage4_KNOWN_HISTORICAL_CACHE_ERRORS.xlsx
-├── valuation/
-│   ├── __init__.py
-│   ├── engine.py               # forecast, CAPM/WACC, DCF, bridge, peers, validation, sensitivities
-│   ├── importers.py            # standard-library XLSX hardcode reader, template-specific imports
-│   └── exports.py              # JSON, CSV, HTML reports
-└── tests/
-    └── test_engine.py         # 37+ automated tests
-```
-
-All runtime paths use the extracted directory as their base. Do not run `app.py` by double-clicking; use Streamlit through the terminal.
-
-## D. Numerical reference tests
-
-To run the tests:
+**Run automated tests:**
 
 ```bash
 python -m pytest -q
 ```
 
-The forward DCF model, WACC and all three scenario prices are checked against values **read from the actual Stage4 Excel workbook**, with strict numerical tolerance. Core output values are **calculated**, never hardcoded in the engine or the interface.
+## 5. Using and updating the model
 
-Default reference regression targets:
+| Screen | Workflow |
+|---|---|
+| Historical Financial Data | Upload the provided `data/SMSM_Stage_2B_Reconciled_Financial_Data.xlsx` file, then press **Validate and apply workbook**. Supported import layouts are restricted to documented Stage 2B/Stage 4 formats. |
+| Forecast Assumptions | Select Base, Bear, or Bull and edit revenue growth, EBIT margin, CapEx/D&A, operating working capital, terminal assumptions, or supported funding/claims inputs. Changes recalculate dependent results in Python. |
+| Valuation Results | Review FCFF forecasts, WACC, EV, equity bridge, indicative peer diagnostics, and the peer-approval process. |
+| Scenarios & Sensitivity | Compare Bear/Base/Bull values and sensitivity surfaces recomputed from the model; grids are not static image mockups. |
+| Sources, Validation & Export | Review sources and validation status. Download structured JSON results, scenario CSV, printable HTML report, and editable model-input JSON. |
 
-- WACC: `0.11968188282959415`
-- Base enterprise value: `11,977,488.833523097` **Rp million**
-- Base parent equity: `12,148,441.129211502` **Rp million**
-- Base fair value: `Rp 2,109.5894803912583/share`
-- Bear fair value: `Rp 1,409.2878587341581/share`
-- Bull fair value: `Rp 2,988.0149319576703/share`
+**Reproducible live-demo test:** With default saved inputs, Base FY2026 EBIT margin is **27.80%** and Base DCF value **Rp2,109.59/share**. Change that margin to **28.80%**; in the previously tested initial state the model changed to approximately **Rp2,113.09/share**. Restore **27.80%**, or restore the saved editable-input JSON, before concluding the demonstration. Actual results depend on the input state of the current session.
 
-These are Stage4 **numerical regression targets** and **analyst estimates**, not audited facts or guaranteed future market values.
+**Input persistence:** Edits are generally session-local and do **not** update the GitHub repository. Download the editable model-input JSON on the Sources/Validation/Export page and restore it on the Historical Financial Data page to resume a saved scenario.
 
-## E. Financial and governance conventions
+**Data provenance:** The financial-input spreadsheet is in `data/`. The archived original Stage 4 workbook in `data/legacy/` is **not** a reliable historical-data baseline due to known H1 2026 mapping and formula-cache defects. Historical EBITDA/TTM values are recalculated from the reconciled Stage 2B sources; see `DATA_PROVENANCE.md`.
 
-- **Market value:** 23 October 2026 closing price × issued shares net of user-specified treasury adjustment. Issued shares are a proxy pending a dated confirmation.
-- **DCF:** Consolidated nominal-IDR operating FCFF discounted at nominal-IDR WACC; 2026 post-valuation stub, mid-period 2027–2031 explicit forecast, December 2031 terminal date.
-- **WACC:** Local sovereign yield adjusted by default spread; mature ERP plus exposure-adjusted country ERP; bottom-up industry beta and capitalization-weighted debt/equity costs.
-- **Terminal value:** Stable FY2032 NOPAT after reinvestment `g / stable ROIC`; invalid `g >= WACC` (or `g >= ROIC`) blocks the DCF.
-- **Enterprise bridge:** Capitalized leases; NCI as separately valued minority claim; TRSS associate and eligible investments outside controlled EV; cash above operating liquidity reserve; derivative claims as explicit adjustable parameter.
-- **Relative:** ATMU/DCI initially indicative only, AUTO excluded for missing EV/operating components. Foreign-company multiples are dimensionless; they are not converted using USD-IDR rates. Peer pre-cutoff prices are required.
-- **Method:** DCF primary; peer multiple only if evidence gates pass. Formal recommendation **WITHHELD** unless required peer/documentation gates and material divergence tests pass.
+**Market updates:** The application supports structured manual updates and uploads; it does **not** promise live automatic market-data feeds. Real-time subscriptions or paid data integrations are not required for the currently deployed workflow. Avoid uploading personal/sensitive data to public repositories.
 
-The first version supports **manual Excel uploads**, not a real-time market-data connection. Automated data refresh is optional under the lecturer's instructions and is not claimed here.
+## 6. Validation evidence and technical scope
 
-## F. Limitations and security
+- **54 local automated Python tests** passed in the Stage 5B release test run; see `STAGE5B_TEST_REPORT.md`.
+- The first GitHub Actions workflow run completed successfully after repository upload, including Python tests, CLI execution and Streamlit HTTP health checks. See the repository **Actions** tab for the authoritative workflow record.
+- **24 October 2026 live user-acceptance testing:** public Incognito access; actual iPhone access and mobile tables/navigation; historical workbook import; forecast assumption propagation; Bear/Base/Bull and sensitivity values; JSON/CSV/HTML exports; editable-input save/restore; eight accounting/model checks; and invalid terminal-growth safeguards.
+- A repeated HTTP 404 for a user-details endpoint was observed in the browser console while core functionality remained usable. This was judged **non-blocking in observed testing**, not conclusively diagnosed.
+- The printable HTML report was checked via PDF print output. A user-selected 85% browser print scale fit its content on one sheet; print settings can differ between printers.
 
-1. **Historical Stage4 workbook defect:** H1 2026 was mislocated, and cached EBITDA / TTM values did not reconcile to disclosed D&A. The application reimports Stage2B financials and recalculates all historical EBITDA and TTM values correctly; see `DATA_PROVENANCE.md`.
-2. **June–October 2026** balance-sheet roll-forward is a modeled estimate (not audited intermediate accounts).
-3. **Risk-free benchmark, beta, capital costs, normalized taxes, NCI, associated investments, derivative claims and excess cash** are partly analyst estimates / economic proxies.
-4. **Treasury shares and dilution** need a dated confirmation before unconditional per-share publication.
-5. **Comparable peers** require further business and accounting normalization; the app does not falsely certify their original Stage4 indications.
-6. **Uploaded Excel** is restricted to the Stage2B/Stage4 sheet structure; unsupported structures and missing critical inputs are rejected, and formula-cache values are never trusted.
-7. **Streamlit live UI not executed in this environment** because package installation could not reach PyPI. All Python engine and import/export tests were executed; see `TEST_REPORT.md`. Run an actual local Streamlit session before the formal lecturer presentation.
+**Scope of tests:** Mathematical/technical checks and live UI tests support usability and internal consistency. They do **not** independently certify every valuation-date market observation, share-count claim, long-run forecast, NCI economic value or comparable-company input.
 
-## G. Suggested live demonstration checklist
+## 7. Financial limitations and decision rules
 
-1. Launch the Streamlit app; show overview and provisional label.
-2. Show historical TTM revenue and normalized EBIT, and explain why these differ from the Stage4 Excel cache.
-3. Edit Base EBIT margin, confirm FCFF and per-share values change; reset.
-4. Edit a scenario and review the 5×5 WACC/terminal-growth sensitivity.
-5. Upload the supplied Stage2B `.xlsx`, confirm zero unintended changes.
-6. Show exclusion of incomplete AUTO/ATMU peers and the controlled review workflow.
-7. Show model BLOCKED on `terminal g >= WACC`; reset.
-8. Download CSV, HTML, JSON and explain they match the currently displayed model.
-9. Run the automated suite: `python -m pytest -q`.
+1. The 23 October 2026 issued-share count/treasury-share and dilution position requires contemporaneous confirmation; issued shares are currently a disclosed proxy.
+2. June-to-October cash movements, operating-cash reserve, derivative and non-controlling-interest economic claims contain modeled assumptions rather than direct market observations.
+3. ERP/beta, financing costs, tax normalization and terminal growth are judgmental market/economic inputs.
+4. More than half the Base operating enterprise value is terminal value (approximately 60.8%), so results are sensitive to WACC, growth and sustainable reinvestment.
+5. DCI multiples remain **indicative only**; ATMU/AUTO have missing or unapproved comparable-input components. At least two independently documented, source-reviewed comparables are required by **this application's approval rule** before publishing a relative value and considering a formal recommendation. The lecturer's brief does not independently specify a two-peer minimum.
+6. The present result intentionally reports the **Bear–Bull conditional range, Base central DCF indication, market-price comparison and a WITHHELD formal recommendation**, rather than an unconditional BUY.
 
-**The application is locally executable once Streamlit is installed; no live deployment or hosted URL is included.**
+See `DATA_PROVENANCE.md`, the app's Sources/Validation/Export page and the corrected MM6026 presentation references for underlying evidence and qualifications.
 
+## 8. Source structure and submission resources
 
-## Stage 5B — Cloud deployment additions
+```text
+app.py                         Streamlit user interface
+run_cli.py                     Independent, non-UI execution
+requirements.txt               Python dependencies
+data/reference_inputs.json      Default historical/forecast/bridge inputs
+data/SMSM_Stage_2B_Reconciled_Financial_Data.xlsx
+valuation/                      DCF/WACC/peer/sensitivity calculation engine and import/export modules
+tests/                          Automated engine and UI smoke tests
+.github/workflows/              CI configuration
+DATA_PROVENANCE.md              Input-source mapping and historical corrections
+STAGE5B_TEST_REPORT.md          54-test evidence and original release boundary
+DEPLOYMENT_AUDIT.md             Deployment documentation
+LIVE_UAT_CHECKLIST.md           Acceptance procedure (completed UAT summarized above)
+```
 
-This release is arranged for GitHub's repository root. **Read `DEPLOYMENT_GUIDE.md`** for browser-only hosting steps and `LIVE_UAT_CHECKLIST.md` for required real-browser acceptance. The original Stage4 Excel workbook is archived in `data/legacy/` and explicitly labeled as containing known historical cache errors. The app uses its documented economic input defaults, not its defective historical caches.
+**Useful source references:**
 
-Session editing is private to each current Streamlit session and **does not persist to your GitHub repo**. Download **Save editable model inputs (.json)** from the Sources page and restore that JSON on the Historical Data page whenever you need to recover edited settings. Do not upload personal or private files to a public repository.
+- SMSM 2025 annual report: https://smsm.co.id/uploads/attachment/Annual%20Report%20SMSM%202025.pdf
+- SMSM company disclosure archive (including June 2026 interim report): https://smsm.co.id/id/otodoc.php
+- Damodaran July 2026 country-risk discussion: https://aswathdamodaran.blogspot.com/2026/07/country-risk-drivers-measures-and.html
+- Damodaran, *Investment Valuation* (2012), and MM6026 course slides provide valuation methodology.
 
-As of this release, no hosted Streamlit site or completed real-browser UAT is claimed. Automatic unit tests in CI are an additional control, not a replacement for the live checklist.
+**Repository status note — 24 October 2026:** The live site is deployed and user-acceptance testing has been completed. Earlier `TEST_REPORT.md` and `STAGE5B_TEST_REPORT.md` are historically dated release-stage evidence; their statements that browser tests had not yet run describe those earlier test environments, **not** the project's current UAT status. Do not retrospectively rewrite old test evidence; use this README and deployment/UAT evidence to document subsequent completion.
