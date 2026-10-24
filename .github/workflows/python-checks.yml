@@ -1,0 +1,24 @@
+name: SMSM valuation checks
+on:
+  push:
+  pull_request:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install packages
+        run: python -m pip install -r requirements.txt
+      - name: Pure-engine and import tests
+        run: python -m pytest -q
+      - name: Independent CLI smoke test
+        run: python run_cli.py
+      - name: Streamlit HTTP health check
+        run: |
+          python -m streamlit run app.py --server.headless true --server.port 8501 > /tmp/smsm-streamlit.log 2>&1 &
+          PID=$!
+          trap 'kill $PID || true' EXIT
+          curl --fail --silent --show-error --retry 10 --retry-delay 2 --retry-connrefused http://127.0.0.1:8501/_stcore/health
